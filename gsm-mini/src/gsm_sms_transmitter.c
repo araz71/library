@@ -49,7 +49,7 @@ const char _dec2hex_[] = {
 void task_sms_tx() {
 	static uint8_t st = 0;
 	static uint64_t ts, wts;
-
+	uint8_t size = 0;
 	if (st == 0) {
 		if (msg != NULL && !gsm_busy() && gsm_service()) {
 			gsm_alloc((uint32_t)task_sms_tx);
@@ -63,11 +63,21 @@ void task_sms_tx() {
 	} else if (st == 1) {
 		if (delay_ms(ts, 10000) || _gsm_resp_[GSM_RESP_TX_ACK]) {
 			if (dil) {
-				for (int i = 0; i < strlen(msg); i++) {
-					gsm_putc('0');
-					gsm_putc('0');
-					gsm_putc(_dec2hex_[(msg[i] >> 4) & 0x0F]);
-					gsm_putc(_dec2hex_[msg[i] & 0x0F]);
+				size = strlen(msg);
+				for (int i = 0; i < size; i++) {
+					if (msg[i] == '~') {
+						i++;
+						while (msg[i] != '~' && i < size) {
+							gsm_putc(msg[i]);
+							i++;
+						}
+						i++;
+					} else {
+						gsm_putc('0');
+						gsm_putc('0');
+						gsm_putc(_dec2hex_[(msg[i] >> 4) & 0x0F]);
+						gsm_putc(_dec2hex_[msg[i] & 0x0F]);
+					}
 				}
 			} else {
 				gsm_puts(msg);
