@@ -66,6 +66,7 @@ typedef enum {
 } cpin_state_enu;
 
 char GsmOperator[20];
+uint8_t GsmTime[6];
 uint32_t GsmSimCharge;
 #define CTRLZ 0x1A
 
