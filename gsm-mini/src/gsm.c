@@ -365,7 +365,7 @@ extern void rtc_set(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint
 static void gsm_resp_cclk(uint8_t _p) {
 	int y, m, d, h, M, s;
 	if (sscanf(_gsm_token_, "+CCLK: \"%d/%d/%d,%d:%d:%d", &y, &m, &d, &h, &M, &s) == 6) {
-		rtc_set(y, m, d, h, M, s);
+		//rtc_set(y, m, d, h, M, s);
 	}
 }
 void gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
@@ -446,7 +446,6 @@ void gsm_cmd(char *_cmd) {
 	gsm_puts("AT+");
 	gsm_puts(_cmd);
 	gsm_puts("\r\n");
-	_gsm_status_rdy_ = false;
 }
 void _sim800_ch_(char _c) {
 	gsm_putc(_c);
@@ -645,6 +644,10 @@ void gsm_init() {
 	_sim800_data_mode_ = false;
 	_sim800_data_mode_callback_ = NULL;
 }
+
+uint8_t gsm_service_ready() {
+	return _gsm_status_rdy_;
+}
 bool_enu gsm_service() {
 	if (_gsm_reg_ == 0
 			|| _gsm_signal_ < 12
@@ -696,6 +699,7 @@ static void _task_gsm_service_() {
 			_gsm_signal_ = 0;
 			_gsm_sim_ = 0;
 			cmd_cntr = 0;
+			_gsm_status_rdy_ = false;
 			gsm_alloc((uint32_t)_task_gsm_service_);
 			st = 1;
 		}
