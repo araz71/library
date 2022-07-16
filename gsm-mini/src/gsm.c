@@ -359,6 +359,20 @@ static void gsm_cb_service_provider(uint8_t _p) {
 	GsmOperator[l] = '\0';
 }
 
+#ifdef GSM_TIME
+static uint8_t gsm_set_time_req = 0;
+extern void rtc_set(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
+static void gsm_resp_cclk(uint8_t _p) {
+	int y, m, d, h, M, s;
+	if (sscanf(_gsm_token_, "+CCLK: \"%d/%d/%d,%d:%d:%d", &y, &m, &d, &h, &M, &s) == 6) {
+		//rtc_set(y, m, d, h, M, s);
+	}
+}
+void gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
+
+}
+#endif
+
 static const gsm_resp_st _gsm_resp_str[] = {
 
 	{ "OK", 				1, 							&gsm_resp_cb_ok 		},
@@ -383,6 +397,10 @@ static const gsm_resp_st _gsm_resp_str[] = {
 	{ "+CPIN: READY", 		CPIN_READY, 				&gsm_resp_cb_cpin 		},
 	{ "+CPIN: NOT READY", 	CPIN_NOT_READY, 			&gsm_resp_cb_cpin 		},
 	{ "+CPIN: NOT INSERTED",CPIN_NOT_INSERTED, 			&gsm_resp_cb_cpin 		},
+
+#ifdef GSM_TIME
+	{ "+CCLK",				0,							&gsm_resp_cclk			},
+#endif
 
 #ifdef GSM_SOCKET
 	{"+IPD,",				0,							&gsm_resp_cb_ipd		},
@@ -626,6 +644,10 @@ void gsm_init() {
 	_sim800_data_mode_ = false;
 	_sim800_data_mode_callback_ = NULL;
 }
+
+uint8_t gsm_service_ready() {
+	return _gsm_status_rdy_;
+}
 bool_enu gsm_service() {
 	if (_gsm_reg_ == 0
 			|| _gsm_signal_ < 12
@@ -643,6 +665,10 @@ const char _v_gsm_serv_cmds_[][16] = {
 		"CREG?",
 		"CPIN?",
 		"CSPN?",
+
+#ifdef GSM_TIME
+		"CCLK?",
+#endif
 
 #ifdef GSM_SOCKET
 		"CIPSTATUS",

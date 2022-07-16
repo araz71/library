@@ -66,6 +66,7 @@ typedef enum {
 } cpin_state_enu;
 
 char GsmOperator[20];
+uint8_t GsmTime[6];
 uint32_t GsmSimCharge;
 #define CTRLZ 0x1A
 
@@ -82,7 +83,10 @@ void gsm_alloc(uint32_t _pid);
 uint32_t gsm_pid();
 void gsm_ip_rcv(void (*_rcv_cb)(uint8_t *_pbuf, uint16_t _len));
 void sim800_set_data_mode(uint8_t _data_mode, void (*_callback)(uint8_t *_data, uint16_t _len)) ;
+
 bool_enu gsm_service() ;
+uint8_t gsm_service_ready();
+
 void task_gsm();
 void gsm_init() ;
 uint8_t gsm_get_signal_strength();
