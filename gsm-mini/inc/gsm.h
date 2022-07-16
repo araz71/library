@@ -86,10 +86,10 @@ void sim800_set_data_mode(uint8_t _data_mode, void (*_callback)(uint8_t *_data, 
 
 bool_enu gsm_service() ;
 uint8_t gsm_service_ready();
+uint8_t gsm_get_signal_strength();
 
 void task_gsm();
 void gsm_init() ;
-uint8_t gsm_get_signal_strength();
-uint8_t gsm_service_ready();
+
 bool_enu check_phone(char *_phone);
 #endif /* GSM_H_ */

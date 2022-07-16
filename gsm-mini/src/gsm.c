@@ -622,6 +622,7 @@ static void _task_sim800_init_() {
 void GSM_USART_ISR() {
 	uint8_t c = GSM_USART->RDR;
 	GSM_USART->ISR;
+	GSM_USART->ICR = 0xFFFF;
 	_sim800_rx_ts_ = get_timestamp();
 	_sim800_rx_buffer_[_sim800_rx_cntr_++] = c;
 	_sim800_rx_buffer_[_sim800_rx_cntr_] = '\0';
@@ -688,10 +689,6 @@ const char _v_gsm_serv_cmds_[][16] = {
 #endif
 		"-",
 };
-
-uint8_t gsm_service_ready() {
-	return _gsm_status_rdy_;
-}
 
 static void _task_gsm_service_() {
 	static uint8_t st = 0;
