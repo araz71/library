@@ -86,6 +86,6 @@ bool_enu gsm_service() ;
 void task_gsm();
 void gsm_init() ;
 uint8_t gsm_get_signal_strength();
-
+uint8_t gsm_service_ready();
 bool_enu check_phone(char *_phone);
 #endif /* GSM_H_ */

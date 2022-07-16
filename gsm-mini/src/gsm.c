@@ -428,7 +428,6 @@ void gsm_cmd(char *_cmd) {
 	gsm_puts("AT+");
 	gsm_puts(_cmd);
 	gsm_puts("\r\n");
-	_gsm_status_rdy_ = false;
 }
 void _sim800_ch_(char _c) {
 	gsm_putc(_c);
@@ -663,6 +662,11 @@ const char _v_gsm_serv_cmds_[][16] = {
 #endif
 		"-",
 };
+
+uint8_t gsm_service_ready() {
+	return _gsm_status_rdy_;
+}
+
 static void _task_gsm_service_() {
 	static uint8_t st = 0;
 	static uint8_t cmd_cntr = 0;
@@ -674,6 +678,7 @@ static void _task_gsm_service_() {
 			_gsm_signal_ = 0;
 			_gsm_sim_ = 0;
 			cmd_cntr = 0;
+			_gsm_status_rdy_ = false;
 			gsm_alloc((uint32_t)_task_gsm_service_);
 			st = 1;
 		}
