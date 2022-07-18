@@ -71,7 +71,6 @@ void task_sms_tx() {
 							gsm_putc(msg[i]);
 							i++;
 						}
-						i++;
 					} else {
 						gsm_putc('0');
 						gsm_putc('0');
