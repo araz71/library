@@ -70,6 +70,16 @@ uint8_t GsmTime[6];
 uint32_t GsmSimCharge;
 #define CTRLZ 0x1A
 
+#ifdef GSM_CALL_HANDLE
+typedef struct {
+	char phone[20];
+	uint8_t dir;
+	gsm_call_status_enu status;
+} gsm_call_inf_st;
+
+gsm_call_inf_st gsm_call_information;
+#endif
+
 void gsm_register_sms_handler(void (*handler_cb)(char *number, char *msg));
 
 void gsm_cmd(char *_cmd);
@@ -81,6 +91,8 @@ bool_enu gsm_busy();
 void gsm_free();
 void gsm_alloc(uint32_t _pid);
 uint32_t gsm_pid();
+bool_enu gsm_isfree();
+
 void gsm_ip_rcv(void (*_rcv_cb)(uint8_t *_pbuf, uint16_t _len));
 void sim800_set_data_mode(uint8_t _data_mode, void (*_callback)(uint8_t *_data, uint16_t _len)) ;
 
@@ -90,6 +102,8 @@ uint8_t gsm_get_signal_strength();
 
 void task_gsm();
 void gsm_init() ;
+
+uint8_t gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 
 bool_enu check_phone(char *_phone);
 #endif /* GSM_H_ */

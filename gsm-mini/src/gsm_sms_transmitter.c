@@ -49,7 +49,7 @@ const char _dec2hex_[] = {
 void task_sms_tx() {
 	static uint8_t st = 0;
 	static uint64_t ts, wts;
-	uint size = 0;
+	uint16_t size = 0;
 	if (st == 0) {
 		if (msg != NULL && !gsm_busy() && gsm_service()) {
 			gsm_alloc((uint32_t)task_sms_tx);

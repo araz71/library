@@ -152,10 +152,10 @@ static void gsm_resp_cb_sms_tx(uint8_t _c) {
 }
 
 #ifdef GSM_CALL_HANDLE
-static void gsm_cb_call(uint8_t _p){
+static void gsm_cb_call(uint8_t _p) {
 	//+CLCC: 1,1,4,0,0,"+989129174769",145,""
 
-	int idx, dir, stat, mode,mpty;
+	int idx, dir, stat, mode, mpty;
 	if (sscanf(_gsm_token_, "+CLCC: %d,%d,%d,%d,%d", &idx, &dir, &stat, &mode, &mpty) == 5) {
 
 		mode = 0;
@@ -169,11 +169,8 @@ static void gsm_cb_call(uint8_t _p){
 		mode++;	//reject 9
 		mode++; //reject 8
 
-		if (dir == 1) {
-			if (stat == GSM_CALL_INCOMMING) {
-
-			}
-		}
+		gsm_call_information.dir = dir;
+		gsm_call_information.status = stat;
 	}
 }
 #endif
@@ -217,7 +214,7 @@ static void gsm_resp_cb_ipd(uint8_t _p) {
 
 static void gsm_resp_cb_nsms(uint8_t _p) {
 	char phone[20];
-	int i = 0;
+	uint32_t i = 0;
 	int l = 0;
 	char p1, p2;
 
@@ -340,7 +337,7 @@ static void gsm_cb_cusd_resp(uint8_t _p) {
 #endif
 
 static void gsm_cb_service_provider(uint8_t _p) {
-	int i = 0;
+	uint32_t i = 0;
 
 	for (; i < strlen(_gsm_token_); i++) {
 		if (_gsm_token_[i] == '\"')
@@ -360,16 +357,23 @@ static void gsm_cb_service_provider(uint8_t _p) {
 }
 
 #ifdef GSM_TIME
-static uint8_t gsm_set_time_req = 0;
+
 extern void rtc_set(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 static void gsm_resp_cclk(uint8_t _p) {
 	int y, m, d, h, M, s;
 	if (sscanf(_gsm_token_, "+CCLK: \"%d/%d/%d,%d:%d:%d", &y, &m, &d, &h, &M, &s) == 6) {
-		//rtc_set(y, m, d, h, M, s);
+		rtc_set(y, m, d, h, M, s);
 	}
 }
-void gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
-
+uint8_t gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
+	if (!gsm_busy()) {
+		char buffer[48];
+		sprintf(buffer, "AT+CCLK=\"%02d/%02d/%02d,%02d:%02d:%02d-32\"\r\n",
+				year, month, day, hour, min, sec);
+		gsm_puts(buffer);
+		return 1;
+	}
+	return 0;
 }
 #endif
 
@@ -457,10 +461,6 @@ void gsm_ip_rcv(void (*_rcv_cb)(uint8_t *_pbuf, uint16_t _len)) {
 	gsm_ip_rcv_cb = _rcv_cb;
 }
 
-extern void port_switch_on_gsm();
-extern void port_free();
-extern uint8_t port_isFree();
-
 void gsm_alloc(uint32_t _pid) {
 	_pid_ = _pid;
 }
@@ -473,6 +473,11 @@ bool_enu gsm_busy() {
 	if (_pid_) return true;
 	return false;
 }
+
+bool_enu gsm_isfree() {
+	return !gsm_busy();
+}
+
 uint32_t gsm_pid() {
 	return _pid_;
 }
@@ -630,6 +635,7 @@ void GSM_USART_ISR() {
 		_sim800_rx_cntr_ = 0;
 	}
 }
+
 void sim800_set_data_mode(uint8_t _data_mode, void (*_callback)(uint8_t *_data, uint16_t _len)) {
 	_sim800_rx_cntr_ = 0;
 	_sim800_rx_buffer_[_sim800_rx_cntr_] = '\0';
@@ -684,7 +690,7 @@ const char _v_gsm_serv_cmds_[][16] = {
 		"CMGR=3",
 		"CMGD=3",
 
-#ifdef GSM_CALL
+#ifdef GSM_CALL_HANDLE
 		"CLCC",
 #endif
 		"-",
