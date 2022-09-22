@@ -29,10 +29,13 @@ typedef enum {
 uint8_t _gsm_resp_[_GSM_RESP_MAX_];
 uint8_t _gprs_sock_state_;
 uint8_t _gsm_status_rdy_;
+uint8_t gsm_sim_sel;
+uint8_t gsm_no_service_cntr;
 
 #define GSM_RESP_IS_OK()	_gsm_resp_[GSM_RESP_OK]
 #define GSM_RESP_IS_ERR()	_gsm_resp_[GSM_RESP_ERR]
 #define GPRS_IP_STATUS()	_gprs_sock_state_
+
 typedef enum{
 	GSM_CALL_ACTIVE,
 	GSM_CALL_HELD,
@@ -106,4 +109,6 @@ void gsm_init() ;
 uint8_t gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 
 bool_enu check_phone(char *_phone);
+
+uint8_t gsm_get_current_simcard();
 #endif /* GSM_H_ */
