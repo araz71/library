@@ -15,6 +15,8 @@
 #include <def.h>
 #include <delay.h>
 
+#define CTRLZ 0x1A
+
 typedef enum {
 	GSM_RESP_TX_ACK,
 	GSM_RESP_CMGS,
@@ -26,6 +28,7 @@ typedef enum {
 	GSM_RESP_USSD,
 	_GSM_RESP_MAX_,
 } gsm_resp_enu;
+
 uint8_t _gsm_resp_[_GSM_RESP_MAX_];
 uint8_t _gprs_sock_state_;
 uint8_t _gsm_status_rdy_;
@@ -71,7 +74,8 @@ typedef enum {
 char GsmOperator[20];
 uint8_t GsmTime[6];
 uint32_t GsmSimCharge;
-#define CTRLZ 0x1A
+uint8_t gsm_failed_sms;
+uint8_t gsm_failed_calls;
 
 #ifdef GSM_CALL_HANDLE
 typedef struct {
@@ -111,4 +115,7 @@ uint8_t gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uin
 bool_enu check_phone(char *_phone);
 
 uint8_t gsm_get_current_simcard();
+
+uint8_t gsm_get_failed_sms();
+uint8_t gsm_get_failed_calls();
 #endif /* GSM_H_ */

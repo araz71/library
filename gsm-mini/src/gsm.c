@@ -17,6 +17,14 @@ extern void usart_putc(USART_TypeDef *_usart, uint8_t _c);
 
 static void (*gsm_sms_handle)(char *number, char *msg) = NULL;
 
+uint8_t gsm_get_failed_sms() {
+	return gsm_failed_sms;
+}
+
+uint8_t gsm_get_failed_calls() {
+	return gsm_failed_calls;
+}
+
 void gsm_register_sms_handler(void (*handler_cb)(char *number, char *msg)) {
 	gsm_sms_handle = handler_cb;
 }
@@ -548,6 +556,8 @@ static void gsm_check_for_sim_sel() {
 #ifdef GSM_2_SIMCARD_SUPPORTED
 	gsm_no_service_cntr++;
 	if (gsm_no_service_cntr >= 3) {
+		gsm_failed_sms = 0;
+		gsm_failed_calls = 0;
 		gsm_no_service_cntr = 0;
 		if (gsm_sim_sel == 0) {
 			mlog("gsm switched to sim-2.");
@@ -576,17 +586,20 @@ static void _task_sim800_init_() {
 		_sim800_power_key_(true);
 		st = gsm_init_power_down;
 		gsm_alloc(0xFFFFFFFF);
+
 	} else if (st == gsm_init_power_down) {
 		if (delay_s(ts, 2)) {
 			_sim800_power_key_(false);
 			sim800_set_data_mode(false, NULL);
 			st = gsm_init_loop_back_off;
 		}
+
 	} else if (st == gsm_init_loop_back_off) {
 		if (delay_s(ts, 2)) {
 			_sim800_cmd_("ATE0");
 			st = gsm_init_sim_off;
 		}
+
 	} else if (st == gsm_init_sim_off) {
 		if (_gsm_resp_[GSM_RESP_OK]) {
 			_sim800_init_try_ = 0;
@@ -595,6 +608,7 @@ static void _task_sim800_init_() {
 		} else if (delay_ms(ts, 500)) {
 			st = gsm_init_power_on;
 		}
+
 	} else if (st == gsm_init_wait_to_sim_off) {
 		if (_gsm_resp_[GSM_RESP_OK]) {
 			_sim800_init_try_ = 0;
@@ -602,19 +616,22 @@ static void _task_sim800_init_() {
 		} else if (delay_s(ts, 15) || _gsm_resp_[GSM_RESP_ERR]) {
 			st  = gsm_init_power_on;
 		}
+
 	} else if (st == gsm_init_sim_on) {
 		if (delay_s(ts, 2)) {
 			gsm_cmd("CFUN=1");
 			st = gsm_init_wait_to_sim_on;
 		}
+
 	} else if (st == gsm_init_wait_to_sim_on) {
 		if (_gsm_resp_[GSM_RESP_OK]) {
 			_sim800_init_try_ = 0;
 			st = gsm_init_wait_to_startup;
+
 		} else if (delay_s(ts, 15) || _gsm_resp_[GSM_RESP_ERR]) {
 			st = gsm_init_power_on;
-		}
-		else if (_gsm_sim_ == CPIN_NOT_INSERTED) {
+
+		} else if (_gsm_sim_ == CPIN_NOT_INSERTED) {
 #ifdef GSM_2_SIMCARD_SUPPORTED
 			if (gsm_sim_sel == 0) {
 				gsm_sim_sel = 1;
@@ -628,11 +645,13 @@ static void _task_sim800_init_() {
 #endif
 			st = gsm_init_power_on;
 		}
+
 	} else if (st == gsm_init_wait_to_startup) {
 		if (delay_s(ts, 10)) {
 			cmd_cntr = 0;
 			st = gsm_init_run;
 		}
+
 	} else if (st == gsm_init_run) {
 		if (_sim800_init_commands_[cmd_cntr][0] != '\0') {
 			gsm_cmd((char *) _sim800_init_commands_[cmd_cntr]);
@@ -640,6 +659,7 @@ static void _task_sim800_init_() {
 		} else {
 			st = gsm_init_wait_to_bring_up;
 		}
+
 	} else if (st == gsm_init_run_ack) {
 		if (_gsm_resp_[GSM_RESP_OK]) {
 			try_cmd = 0;
@@ -655,13 +675,16 @@ static void _task_sim800_init_() {
 				st = gsm_init_run;
 			}
 		}
+
 	} else if (st == gsm_init_wait_to_bring_up) {
 		gsm_free();
 		st = gsm_init_idle;
 	}
 
 	if (st == gsm_init_idle) {
-		if (!gsm_service() && delay_s(ts, 120) && !gsm_busy()) {
+		if (gsm_failed_sms > 5 ||
+				(!gsm_service() && delay_s(ts, 120) && !gsm_busy()))
+		{
 			gsm_alloc((uint32_t)_task_sim800_init_);
 			gsm_check_for_sim_sel();
 			st = gsm_init_power_on;
@@ -700,11 +723,14 @@ void gsm_init() {
 	_sim800_data_mode_callback_ = NULL;
 	gsm_sim_sel = 0;
 	gsm_no_service_cntr = 0;
+	gsm_failed_sms = 0;
+	gsm_failed_calls = 0;
 }
 
 uint8_t gsm_service_ready() {
 	return _gsm_status_rdy_;
 }
+
 bool_enu gsm_service() {
 	if (_gsm_reg_ == 0
 			|| _gsm_signal_ < 12

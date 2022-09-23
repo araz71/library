@@ -89,8 +89,14 @@ void task_sms_tx() {
 		}
 	} else if (st == 2) {
 		if (GSM_RESP_IS_OK() || delay_s(wts, 240) || GSM_RESP_IS_ERR()) {
-			if (GSM_RESP_IS_OK()) sms_succ = SMS_SUCC_OK;
-			else sms_succ = SMS_SUCC_FAILED;
+			if (GSM_RESP_IS_OK()) {
+				gsm_failed_sms = 0;
+				sms_succ = SMS_SUCC_OK;
+			}
+			else {
+				gsm_failed_sms++;
+				sms_succ = SMS_SUCC_FAILED;
+			}
 			msg = NULL;
 			gsm_free();
 			st = 0;
