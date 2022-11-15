@@ -397,6 +397,22 @@ uint8_t gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uin
 }
 #endif
 
+void gsm_cb_dtmf(uint8_t _p) {
+	if (sscanf(_gsm_token_, "+DTMF: %c", &gsm_dtmf_code) == 0) {
+		gsm_dtmf_code = 0xFF;
+	}
+}
+
+uint8_t gsm_get_dtmf() {
+	uint8_t temp = 0xFF;
+	if (gsm_dtmf_code != 0xFF) {
+		temp = gsm_dtmf_code;
+		gsm_dtmf_code = 0xFF;
+	}
+
+	return temp;
+}
+
 static const gsm_resp_st _gsm_resp_str[] = {
 
 	{ "OK", 				1, 							&gsm_resp_cb_ok 		},
@@ -422,6 +438,8 @@ static const gsm_resp_st _gsm_resp_str[] = {
 	{ "+CPIN: NOT READY", 	CPIN_NOT_READY, 			&gsm_resp_cb_cpin 		},
 	{ "+CPIN: NOT INSERTED",CPIN_NOT_INSERTED, 			&gsm_resp_cb_cpin 		},
 
+	{ "+DTMF"				,0,							&gsm_cb_dtmf			},
+
 #ifdef GSM_TIME
 	{ "+CCLK",				0,							&gsm_resp_cclk			},
 #endif
@@ -438,6 +456,8 @@ static const gsm_resp_st _gsm_resp_str[] = {
 static const char _sim800_init_commands_[][20] = {
 		"CMGF=1",
 		"CMGDA=\"DEL ALL\"",
+
+		"DDET=1,1,1,1",
 #ifdef GSM_SOCKET
 		"CIPSHUT",
 		"CIPMODE=0",

@@ -77,6 +77,8 @@ uint32_t GsmSimCharge;
 uint8_t gsm_failed_sms;
 uint8_t gsm_failed_calls;
 
+uint8_t gsm_dtmf_code;
+
 #ifdef GSM_CALL_HANDLE
 typedef struct {
 	char phone[20];
@@ -93,6 +95,8 @@ void gsm_cmd(char *_cmd);
 void gsm_resp_clear();
 void gsm_putc(char _c);
 void gsm_puts(char *_str);
+
+uint8_t gsm_get_dtmf();
 
 bool_enu gsm_busy();
 void gsm_free();
