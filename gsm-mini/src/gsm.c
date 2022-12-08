@@ -456,7 +456,8 @@ static const gsm_resp_st _gsm_resp_str[] = {
 static const char _sim800_init_commands_[][20] = {
 		"CMGF=1",
 		"CMGDA=\"DEL ALL\"",
-
+		"CNMI=2,1,0,0",
+		"CSMP=17,167,0,16",
 		"DDET=1,1,1,1",
 #ifdef GSM_SOCKET
 		"CIPSHUT",
