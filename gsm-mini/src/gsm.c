@@ -62,6 +62,7 @@ static uint8_t _hex2dec_(char _h) {
 	} else if (_h == 'F' || _h == 'f') {
 		return 15;
 	}
+
 	return 0;
 }
 
@@ -127,6 +128,7 @@ static void gsm_resp_cb_reg(uint8_t _p) {
 			_gsm_reg_ = 1;
 		}
 	}
+
 	_gsm_resp_[GSM_RESP_OK] = 1;
 }
 
@@ -172,18 +174,36 @@ static void gsm_resp_cb_sms_tx(uint8_t _c) {
 }
 
 #ifdef GSM_CALL_HANDLE
+
+gsm_call_status_enu gsm_get_call_status() {
+	return gsm_call_information.status;
+}
+
+void gsm_call_finish() {
+	gsm_call_information.status = GSM_CALL_DISCONNECT;
+	gsm_puts("ATH\r\n");
+}
+
+void gsm_call(char* phone_number) {
+	gsm_call_information.status = GSM_CALL_DIALING;
+	gsm_puts("ATD");
+	gsm_puts(phone_number);
+	gsm_puts(";\r\n");
+}
+
 static void gsm_cb_call(uint8_t _p) {
 	//+CLCC: 1,1,4,0,0,"+989129174769",145,""
-
 	int idx, dir, stat, mode, mpty;
-	if (sscanf(_gsm_token_, "+CLCC: %d,%d,%d,%d,%d", &idx, &dir, &stat, &mode, &mpty) == 5) {
 
+	if (sscanf(_gsm_token_, "+CLCC: %d,%d,%d,%d,%d", &idx, &dir, &stat, &mode, &mpty) == 5) {
 		mode = 0;
+
 		for (; _gsm_token_[mode] != '\0'; mode++) {
 			if (_gsm_token_[mode] == '\"') {
 				break;
 			}
 		}
+
 		mode++;	//reject "
 		mode++;	//reject +
 		mode++;	//reject 9

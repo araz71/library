@@ -87,6 +87,14 @@ typedef struct {
 } gsm_call_inf_st;
 
 gsm_call_inf_st gsm_call_information;
+
+void gsm_call(char* phone_number);
+
+// Returns GSM calling status
+gsm_call_status_enu gsm_get_call_status();
+
+// Sends ATH to GSM and sets status to disconnect.
+void gsm_call_finish();
 #endif
 
 void gsm_register_sms_handler(void (*handler_cb)(char *number, char *msg));
