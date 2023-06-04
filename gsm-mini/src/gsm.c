@@ -107,10 +107,10 @@ static void gsm_resp_cb_cpin(uint8_t _resp) {
 static void gsm_resp_cb_ok(uint8_t _resp) {
 	_gsm_resp_[GSM_RESP_OK] = _resp;
 }
-static void gsm_resp_cb_err(uint8_t _err) {
+static void gsm_resp_cb_err(UNUSED uint8_t _err) {
 	_gsm_resp_[GSM_RESP_ERR] = 1;
 }
-static void gsm_resp_cb_signal(uint8_t _p) {
+static void gsm_resp_cb_signal(UNUSED uint8_t _p) {
 	int signal;
 	if (sscanf(_gsm_token_, "+CSQ: %d", &signal) == 1) {
 		_gsm_signal_ = (uint8_t) signal;
@@ -118,7 +118,7 @@ static void gsm_resp_cb_signal(uint8_t _p) {
 		_gsm_signal_ = 0;
 	}
 }
-static void gsm_resp_cb_reg(uint8_t _p) {
+static void gsm_resp_cb_reg(UNUSED uint8_t _p) {
 	int reg = 0;
 	int n = 0;
 	if (sscanf(_gsm_token_, "+CREG: %d,%d", &n, &reg) == 2) {
@@ -166,10 +166,10 @@ static void gsm_resp_cb_socket(uint8_t _st) {
 }
 #endif
 
-static void gsm_resp_cb_wr(uint8_t _c) {
+static void gsm_resp_cb_wr(UNUSED uint8_t _c) {
 	_gsm_resp_[GSM_RESP_TX_ACK] = 1;
 }
-static void gsm_resp_cb_sms_tx(uint8_t _c) {
+static void gsm_resp_cb_sms_tx(UNUSED uint8_t _c) {
 	_gsm_resp_[GSM_RESP_CMGS] = 1;
 }
 
@@ -191,7 +191,7 @@ void gsm_call(char* phone_number) {
 	gsm_puts(";\r\n");
 }
 
-static void gsm_cb_call(uint8_t _p) {
+static void gsm_cb_call(UNUSED uint8_t _p) {
 	//+CLCC: 1,1,4,0,0,"+989129174769",145,""
 	int idx, dir, stat, mode, mpty;
 
@@ -252,7 +252,7 @@ static void gsm_resp_cb_ipd(uint8_t _p) {
 }
 #endif
 
-static void gsm_resp_cb_nsms(uint8_t _p) {
+static void gsm_resp_cb_nsms(UNUSED uint8_t _p) {
 	char phone[20];
 	uint32_t i = 0;
 	int l = 0;
@@ -376,7 +376,7 @@ static void gsm_cb_cusd_resp(uint8_t _p) {
 }
 #endif
 
-static void gsm_cb_service_provider(uint8_t _p) {
+static void gsm_cb_service_provider(UNUSED uint8_t _p) {
 	uint32_t i = 0;
 
 	for (; i < strlen(_gsm_token_); i++) {
@@ -399,7 +399,7 @@ static void gsm_cb_service_provider(uint8_t _p) {
 #ifdef GSM_TIME
 
 extern void rtc_set(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
-static void gsm_resp_cclk(uint8_t _p) {
+static void gsm_resp_cclk(UNUSED uint8_t _p) {
 	int y, m, d, h, M, s;
 	if (sscanf(_gsm_token_, "+CCLK: \"%d/%d/%d,%d:%d:%d", &y, &m, &d, &h, &M, &s) == 6) {
 		rtc_set(y, m, d, h, M, s);
@@ -417,7 +417,7 @@ uint8_t gsm_set_time(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uin
 }
 #endif
 
-void gsm_cb_dtmf(uint8_t _p) {
+void gsm_cb_dtmf(UNUSED uint8_t _p) {
 	if (sscanf(_gsm_token_, "+DTMF: %c", &gsm_dtmf_code) == 0) {
 		gsm_dtmf_code = 0xFF;
 	}
