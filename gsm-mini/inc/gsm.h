@@ -15,6 +15,8 @@
 #include <def.h>
 #include <delay.h>
 
+#define UNUSED					__attribute__((unused))
+
 #define CTRLZ 0x1A
 
 typedef enum {
