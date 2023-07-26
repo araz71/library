@@ -4,10 +4,10 @@
  *  Created on: Oct 27, 2019
  *      Author: amin
  */
+#ifdef GSM_SOCEKT
 
 #include <gsm_socket.h>
 
-#ifdef GSM_SOCEKT
 static struct gsm_socket_st {
 	void (*connect_cb)(int8_t _st);
 	void (*transmitt_cb)(uint8_t _st);
