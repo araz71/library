@@ -73,9 +73,13 @@ typedef enum {
 	CPIN_SIM_PIN,
 } cpin_state_enu;
 
+#ifdef GSM_SERVICE_PROVIDER
 char GsmOperator[20];
-uint8_t GsmTime[6];
+#endif
+
+#ifdef GSM_CHARGE_CHECK
 uint32_t GsmSimCharge;
+#endif
 uint8_t gsm_failed_sms;
 uint8_t gsm_failed_calls;
 

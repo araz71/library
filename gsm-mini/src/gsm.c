@@ -1,7 +1,9 @@
 #include <gsm.h>
 
 static uint8_t _sim800_rx_buffer_[384];
+#ifdef GSM_SOCEKT
 static uint8_t _ipd_buffer_[128];
+#endif
 static uint16_t _sim800_rx_cntr_ = 0;
 static uint64_t _sim800_rx_ts_;
 static uint8_t _sim800_data_mode_ = 0;
@@ -33,16 +35,16 @@ uint8_t gsm_get_current_simcard() {
 	return gsm_sim_sel;
 }
 
-bool_enu check_phone(char *_phone) {
-	bool_enu phone_valid = true;
+__attribute__((weak)) bool_enu check_phone(char *_phone) {
+	bool_enu phone_valid = TRUE;
 	int i = 0;
 	for (i = 0; i < 13; i++) {
 		if (_phone[i] == '\0') break;
 		if (!(_phone[i] >= '0' && _phone[i] <= '9')) {
-			phone_valid = false;
+			phone_valid = FALSE;
 		}
 	}
-	if (i < 5) phone_valid = false;
+	if (i < 5) phone_valid = FALSE;
 	return phone_valid;
 }
 
@@ -259,7 +261,7 @@ static void gsm_resp_cb_nsms(UNUSED uint8_t _p) {
 	char p1, p2;
 
 	if (gsm_sms_handle == NULL) return;
-	GSM_RESP_IS_OK() = true;
+	GSM_RESP_IS_OK() = TRUE;
 	for (i = 0; _gsm_token_[i] != '\"'; i++) {
 		if (_gsm_token_[i] == '\0') return;
 	}
@@ -286,9 +288,14 @@ static void gsm_resp_cb_nsms(UNUSED uint8_t _p) {
 
 	_gsm_token_ = strtok(NULL, "\r\n");
 	if (_gsm_token_ == NULL) return;
+	uint8_t rcv_b = 0;
 	for (i = 0; i < strlen(_gsm_token_); i += 2) {
 		p1 = _hex2dec_(_gsm_token_[i]);
 		p2 = _hex2dec_(_gsm_token_[i + 1]);
+		rcv_b = (p1 << 4) | p2;
+		if (rcv_b == 0) {	// DAMN ON IRANCELL
+			continue;
+		}
 		_gsm_token_[l] = (p1 << 4) | p2;
 		l++;
 	}
@@ -328,7 +335,7 @@ static void gsm_cb_cusd_resp(uint8_t _p) {
 				}
 			}
 
-			_gsm_resp_[GSM_RESP_USSD] = true;
+			_gsm_resp_[GSM_RESP_USSD] = TRUE;
 			break;
 		} else if ((i + strlen(rial_utf8)) < strlen(_gsm_token_) && strncmp(_gsm_token_ + i, rial_utf8, strlen(rial_utf8)) == 0) {
 			i -= 4;
@@ -359,7 +366,7 @@ static void gsm_cb_cusd_resp(uint8_t _p) {
 								|| temp[0] != '0'
 								|| temp[1] != '0')
 						{
-							_gsm_resp_[GSM_RESP_USSD] = true;
+							_gsm_resp_[GSM_RESP_USSD] = TRUE;
 							return;
 						} else {
 							uint8_t num;
@@ -376,6 +383,7 @@ static void gsm_cb_cusd_resp(uint8_t _p) {
 }
 #endif
 
+#ifdef GSM_SERVICE_PROVIDER
 static void gsm_cb_service_provider(UNUSED uint8_t _p) {
 	uint32_t i = 0;
 
@@ -395,6 +403,7 @@ static void gsm_cb_service_provider(UNUSED uint8_t _p) {
 	}
 	GsmOperator[l] = '\0';
 }
+#endif
 
 #ifdef GSM_TIME
 
@@ -449,7 +458,10 @@ static const gsm_resp_st _gsm_resp_str[] = {
 	{"+CLCC:",				0,							&gsm_cb_call			},
 #endif
 
+#ifdef GSM_SERVICE_PROVIDER
 	{"+CSPN",				0,							&gsm_cb_service_provider},
+#endif
+
 	{ "+CSQ:", 				0, 							&gsm_resp_cb_signal		},
 	{ "+CREG:", 			0, 							&gsm_resp_cb_reg 		},
 	{ "+CMGR:",				0,							&gsm_resp_cb_nsms		},
@@ -499,8 +511,8 @@ static const char _sim800_init_commands_[][20] = {
 };
 
 static void _sim800_cmd_(char *_cmd) {
-	_gsm_resp_[GSM_RESP_OK] = false;
-	_gsm_resp_[GSM_RESP_ERR] = false;
+	_gsm_resp_[GSM_RESP_OK] = FALSE;
+	_gsm_resp_[GSM_RESP_ERR] = FALSE;
 	gsm_puts(_cmd);
 	gsm_puts("\r\n");
 }
@@ -516,7 +528,7 @@ void _sim800_ch_(char _c) {
 	gsm_putc(_c);
 }
 
-uint32_t _pid_;
+static uint32_t _pid_;
 
 void gsm_ip_rcv(void (*_rcv_cb)(uint8_t *_pbuf, uint16_t _len)) {
 	gsm_ip_rcv_cb = _rcv_cb;
@@ -531,8 +543,8 @@ void gsm_free() {
 }
 
 bool_enu gsm_busy() {
-	if (_pid_) return true;
-	return false;
+	if (_pid_) return TRUE;
+	return FALSE;
 }
 
 bool_enu gsm_isfree() {
@@ -546,7 +558,9 @@ uint32_t gsm_pid() {
 void _task_sim800_rcv_hdl_() {
 	if (_sim800_rx_cntr_) {
 		if (delay_ms(_sim800_rx_ts_, 50)) {
+#ifdef GSM_SOCEKT
 			memcpy(_ipd_buffer_, _sim800_rx_buffer_, 128);
+#endif
 			if (_sim800_data_mode_) {
 				if (_sim800_data_mode_callback_ != NULL) {
 					_sim800_data_mode_callback_(_sim800_rx_buffer_, _sim800_rx_cntr_);
@@ -612,6 +626,7 @@ static void gsm_check_for_sim_sel() {
 	}
 #endif
 }
+
 static void _task_sim800_init_() {
 	static uint8_t st = gsm_init_power_on, last_st = 0xFF;
 	static uint64_t ts;
@@ -624,14 +639,14 @@ static void _task_sim800_init_() {
 	}
 
 	if (st == gsm_init_power_on) {
-		_sim800_power_key_(true);
+		_sim800_power_key_(TRUE);
 		st = gsm_init_power_down;
 		gsm_alloc(0xFFFFFFFF);
 
 	} else if (st == gsm_init_power_down) {
 		if (delay_s(ts, 2)) {
-			_sim800_power_key_(false);
-			sim800_set_data_mode(false, NULL);
+			_sim800_power_key_(FALSE);
+			sim800_set_data_mode(FALSE, NULL);
 			st = gsm_init_loop_back_off;
 		}
 
@@ -760,7 +775,7 @@ void gsm_init() {
 	_gsm_reg_ = 0;
 	gsm_alloc((uint32_t)_task_sim800_init_);
 	_sim800_init_try_ = 0;
-	_sim800_data_mode_ = false;
+	_sim800_data_mode_ = FALSE;
 	_sim800_data_mode_callback_ = NULL;
 	gsm_sim_sel = 0;
 	gsm_no_service_cntr = 0;
@@ -778,9 +793,9 @@ bool_enu gsm_service() {
 			|| _gsm_sim_ != CPIN_READY
 			|| _gsm_reg_ != 1)
 	{
-		return false;
+		return FALSE;
 	}
-	return true;
+	return TRUE;
 }
 
 const char _v_gsm_serv_cmds_[][16] = {
@@ -788,7 +803,10 @@ const char _v_gsm_serv_cmds_[][16] = {
 		"CSQ",
 		"CREG?",
 		"CPIN?",
+
+#ifdef GSM_SERVICE_PROVIDER
 		"CSPN?",
+#endif
 
 #ifdef GSM_TIME
 		"CCLK?",
@@ -824,7 +842,7 @@ static void _task_gsm_service_() {
 			_gsm_signal_ = 0;
 			_gsm_sim_ = 0;
 			cmd_cntr = 0;
-			_gsm_status_rdy_ = false;
+			_gsm_status_rdy_ = FALSE;
 			gsm_alloc((uint32_t)_task_gsm_service_);
 			st = 1;
 		}
@@ -838,7 +856,7 @@ static void _task_gsm_service_() {
 			st = 2;
 		}
 	} else if (st == 2) {
-		_gsm_status_rdy_ = true;
+		_gsm_status_rdy_ = TRUE;
 		gsm_free();
 		st = 3;
 	} else {

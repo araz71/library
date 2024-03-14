@@ -9,6 +9,7 @@
 #include <gsm_charge.h>
 #include <gsm.h>
 
+#ifdef GSM_CHARGE_CHECK
 const char UssdChargeCodeReq[][10] = { "*140*11#", "*141*1#", "*140#" };
 
 void task_gsm_charge_check() {
@@ -77,3 +78,4 @@ void task_gsm_charge_check() {
 		}
 	}
 }
+#endif
