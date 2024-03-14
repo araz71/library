@@ -260,18 +260,27 @@ static void gsm_resp_cb_nsms(UNUSED uint8_t _p) {
 	int l = 0;
 	char p1, p2;
 
-	if (gsm_sms_handle == NULL) return;
+	if (gsm_sms_handle == NULL) {
+		return;
+	}
+
 	GSM_RESP_IS_OK() = TRUE;
 	for (i = 0; _gsm_token_[i] != '\"'; i++) {
-		if (_gsm_token_[i] == '\0') return;
+		if (_gsm_token_[i] == '\0') {
+			return;
+		}
 	}
 	i++;
 	_gsm_token_ += i;
-	if (_gsm_token_[0] != 'R' || _gsm_token_[4] != 'U') return;
+	if (_gsm_token_[0] != 'R' || _gsm_token_[4] != 'U') {
+		return;
+	}
 
 	//get number
 	for (i = 0; _gsm_token_[i] != ','; i++) {
-		if (_gsm_token_[i] == '\0') return;
+		if (_gsm_token_[i] == '\0') {
+			return;
+		}
 	}
 	i++;		//"
 	i += 7;		//+98
@@ -287,7 +296,10 @@ static void gsm_resp_cb_nsms(UNUSED uint8_t _p) {
 	}
 
 	_gsm_token_ = strtok(NULL, "\r\n");
-	if (_gsm_token_ == NULL) return;
+
+	if (_gsm_token_ == NULL) {
+		return;
+	}
 	uint8_t rcv_b = 0;
 	for (i = 0; i < strlen(_gsm_token_); i += 2) {
 		p1 = _hex2dec_(_gsm_token_[i]);

@@ -93,8 +93,7 @@ void task_sms_tx() {
 			if (GSM_RESP_IS_OK()) {
 				gsm_failed_sms = 0;
 				sms_succ = SMS_SUCC_OK;
-			}
-			else {
+			} else {
 				gsm_failed_sms++;
 				sms_succ = SMS_SUCC_FAILED;
 			}
