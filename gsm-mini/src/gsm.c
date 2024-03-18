@@ -97,11 +97,14 @@ static void _sim800_power_key_(bool_enu _set) {
 	}
 }
 
+#pragma pack(push)
+#pragma pack(1)
 typedef struct {
 	char res[20];
 	uint8_t resp_code;
 	void (*callback)(uint8_t _resp);
 } gsm_resp_st;
+#pragma pack(pop)
 
 static void gsm_resp_cb_cpin(uint8_t _resp) {
 	_gsm_sim_ = _resp;
@@ -418,7 +421,6 @@ static void gsm_cb_service_provider(UNUSED uint8_t _p) {
 #endif
 
 #ifdef GSM_TIME
-
 extern void rtc_set(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 static void gsm_resp_cclk(UNUSED uint8_t _p) {
 	int y, m, d, h, M, s;
