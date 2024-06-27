@@ -108,7 +108,7 @@ void gsm_register_sms_handler(void (*handler_cb)(char *number, char *msg));
 void gsm_cmd(char *_cmd);
 void gsm_resp_clear();
 void gsm_putc(char _c);
-void gsm_puts(char *_str);
+void gsm_puts(const char *_str);
 
 uint8_t gsm_get_dtmf();
 

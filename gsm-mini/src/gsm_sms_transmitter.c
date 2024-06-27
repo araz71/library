@@ -13,14 +13,10 @@ static uint8_t dil;
 static sms_succ_enu sms_succ;
 
 void sms_req(char *_phonenumber, char *_msg, bool_enu _en) {
-	if (check_phone(_phonenumber)) {
-		msg = _msg;
-		dil = _en;
-		phone_number = _phonenumber;
-		sms_succ = SMS_SUCC_BUSY;
-	} else {
-		sms_succ = SMS_SUCC_ERR_PHONE;
-	}
+	msg = _msg;
+	dil = _en;
+	phone_number = _phonenumber;
+	sms_succ = SMS_SUCC_BUSY;
 }
 
 uint8_t sms_is_transmitted() {
@@ -84,6 +80,7 @@ void task_sms_tx() {
 			}
 			gsm_putc(CTRLZ);
 			_gsm_resp_[GSM_RESP_OK] = 0;
+			sms_succ = SMS_SUCC_REQ_OK;
 			wts = get_timestamp();
 			ts = get_timestamp();
 			st = 2;

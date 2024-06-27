@@ -81,7 +81,7 @@ void gsm_putc(char _c) {
 void gsm_resp_clear() {
 	_gprs_sock_state_ = GPRS_IP_STATE_INITIAL;
 }
-void gsm_puts(char *_str) {
+void gsm_puts(const char *_str) {
 	while (1) {
 		if ((*_str) == '\0') {
 			return;
