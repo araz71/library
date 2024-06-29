@@ -500,6 +500,7 @@ static const gsm_resp_st _gsm_resp_str[] = {
 };
 
 static const char _sim800_init_commands_[][20] = {
+		"CCLK?",
 		"CMGF=1",
 		"CMGDA=\"DEL ALL\"",
 		"CNMI=2,1,0,0",
@@ -619,6 +620,8 @@ typedef enum {
 	gsm_init_err,
 	gsm_gps_init,
 	gsm_gps_init_ack,
+
+	gsm_get_time,
 } gsm_init_enu;
 
 static void gsm_check_for_sim_sel() {
@@ -673,11 +676,24 @@ static void _task_sim800_init_() {
 	} else if (st == gsm_init_sim_off) {
 		if (_gsm_resp_[GSM_RESP_OK]) {
 			_sim800_init_try_ = 0;
+#ifdef GSM_TIME
+			gsm_cmd("CCLK?");
+			st = gsm_get_time;
+#else
 			gsm_cmd("CFUN=0");
 			st = gsm_init_wait_to_sim_off;
+#endif
 		} else if (delay_ms(ts, 500)) {
 			st = gsm_init_power_on;
 		}
+
+#ifdef GSM_TIME
+	} else if (st == gsm_get_time) {
+		if (_gsm_resp_[GSM_RESP_OK] || delay_ms(ts, 500)) {
+			gsm_cmd("CFUN=0");
+			st = gsm_init_wait_to_sim_off;
+		}
+#endif
 
 	} else if (st == gsm_init_wait_to_sim_off) {
 		if (_gsm_resp_[GSM_RESP_OK]) {
