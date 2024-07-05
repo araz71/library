@@ -87,7 +87,9 @@ uint8_t gsm_dtmf_code;
 
 #ifdef GSM_CALL_HANDLE
 typedef struct {
+#ifdef GSM_CALL_IN
 	char phone[20];
+#endif
 	uint8_t dir;
 	gsm_call_status_enu status;
 } gsm_call_inf_st;
