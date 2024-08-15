@@ -209,6 +209,7 @@ static void gsm_cb_call(UNUSED uint8_t _p) {
 			}
 		}
 
+<<<<<<< HEAD
 //		mode++;	//reject "
 //		mode++;	//reject +
 //		mode++;	//reject 9
