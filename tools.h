@@ -6,8 +6,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <log.h>
-
 char* extract_number(const char* str, int* result, int* ok);
 int extract_nth_number(const char* str, int nth, int* ok);
 
