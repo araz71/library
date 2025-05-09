@@ -5,134 +5,157 @@
  *      Author: amin
  */
 
-#include "soft_i2c.h"
+#include <soft_i2c.h>
 
-#define SOFT_SDA_ON		PIN_SET(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN)
-#define SOFT_SDA_OFF	PIN_CLR(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN)
+#define SOFT_I2C_DELAY			1
 
-#define SOFT_SCL_ON		PIN_SET(SOFT_I2C_SCL_GPIO, SOFT_I2C_SCL_PIN)
-#define SOFT_SCL_OFF	PIN_CLR(SOFT_I2C_SCL_GPIO, SOFT_I2C_SCL_PIN)
+static void i2c_clk(SoftI2cCallbacks* i2c_ifw);
 
-void soft_i2c_init() {
-	pin_set_mode(SOFT_I2C_SCL_GPIO, SOFT_I2C_SCL_PIN, PIN_MODE_OUTPUT);
-	pin_set_mode(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN, PIN_MODE_OUTPUT);
-	pin_set_speed(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN, 1);
-	pin_set_speed(SOFT_I2C_SCL_GPIO, SOFT_I2C_SCL_PIN, 1);
+void soft_i2c_init(SoftI2cCallbacks* i2c_ifw) {
+	i2c_ifw->input_sda(0);
 
-	PIN_PUSH_PULL(SOFT_I2C_SCL_GPIO, SOFT_I2C_SCL_PIN);
-	PIN_OPEN_DRAIN(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN);
+	i2c_ifw->sda_cntl(1);
+	i2c_ifw->scl_cntl(1);
 
-	SOFT_SCL_ON;
-	SOFT_SDA_ON;
 	for (int i = 0; i < 100; i++)
 		__NOP();
-
-
-}
-void soft_i2c_start() {
-	SOFT_SCL_ON;
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
-	SOFT_SDA_ON;
-
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
-
-	SOFT_SDA_OFF;
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
-
-	SOFT_SCL_OFF;
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
 }
 
-uint8_t soft_i2c_write(uint8_t _data) {
+void soft_i2c_start(SoftI2cCallbacks* i2c_ifw) {
+	/*
+	In start SDA should go low after SCL goes low
+
+	SDA --------|
+				|__________
+	
+	SCL -----|
+			 |______________
+	*/
+
+	// First make sure I2C is in idle state
+	i2c_ifw->scl_cntl(TRUE);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+		__NOP();
+
+	i2c_ifw->sda_cntl(TRUE);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+		__NOP();
+
+	i2c_ifw->sda_cntl(FALSE);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+		__NOP();
+
+	i2c_ifw->scl_cntl(FALSE);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+		__NOP();
+}
+
+uint8_t soft_i2c_write(SoftI2cCallbacks* i2c_ifw, uint8_t _data) {
 	uint8_t data = _data;
 
 	for (uint8_t i = 0; i < 8; i++) {
-		if (data & 0x80)
-			SOFT_SDA_ON;
-		else
-			SOFT_SDA_OFF;
+		if (data & 0x80) {
+			i2c_ifw->sda_cntl(TRUE);
+		} else {
+			i2c_ifw->sda_cntl(FALSE);
+		}
 		data = data << 1;
-		i2c_clk();
+
+		i2c_clk(i2c_ifw);
 	}
-	SOFT_SDA_ON;
-	pin_set_mode(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN, PIN_MODE_INPUT);
-	i2c_clk();
-	uint8_t ack = PIN_STATE(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN) ? 0 : 1;
-	pin_set_mode(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN, PIN_MODE_OUTPUT);
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+
+	i2c_ifw->sda_cntl(TRUE);
+
+	// Read NACK. First SDA should be input
+	i2c_ifw->input_sda(TRUE);
+
+	i2c_ifw->scl_cntl(TRUE);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++) {
 		__NOP();
+	}
+
+	uint8_t ack = i2c_ifw->read_sda();
+	i2c_ifw->input_sda(FALSE);
+
+	i2c_ifw->scl_cntl(FALSE);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++) {
+		__NOP();
+	}
+
 	return ack;
 }
 
-void soft_i2c_restart() {
-	SOFT_SDA_ON;
+void soft_i2c_restart(SoftI2cCallbacks* i2c_ifw) {
+	i2c_ifw->sda_cntl(TRUE);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
-	SOFT_SCL_ON;
+
+	i2c_ifw->scl_cntl(TRUE);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
-	SOFT_SDA_OFF;
+
+	i2c_ifw->sda_cntl(FALSE);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
-	SOFT_SCL_OFF;
+
+	i2c_ifw->scl_cntl(FALSE);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
 }
 
-void soft_i2c_stop() {
-	SOFT_SDA_OFF;
-
+void soft_i2c_stop(SoftI2cCallbacks* i2c_ifw) {
+	/*
+	SDA 		   |--------
+		___________|
+	
+	SCL		  |--------------
+		______|
+	
+	*/
+	i2c_ifw->sda_cntl(OFF);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
 
-	SOFT_SCL_OFF;
-
+	i2c_ifw->scl_cntl(ON);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
 
-	SOFT_SCL_ON;
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
-	SOFT_SDA_ON;
-
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
-}
-
-void i2c_clk() {
-	SOFT_SCL_ON;
-	for (int i = 0; i < SOFT_I2C_DELAY; i++)
-		__NOP();
-	SOFT_SCL_OFF;
+	i2c_ifw->sda_cntl(ON);
 	for (int i = 0; i < SOFT_I2C_DELAY; i++)
 		__NOP();
 }
 
-uint8_t soft_i2c_read(uint8_t _ack) {
+static void i2c_clk(SoftI2cCallbacks* i2c_ifw) {
+	i2c_ifw->scl_cntl(ON);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+		__NOP();
+
+	i2c_ifw->scl_cntl(OFF);
+	for (int i = 0; i < SOFT_I2C_DELAY; i++)
+		__NOP();
+}
+
+uint8_t soft_i2c_read(SoftI2cCallbacks* i2c_ifw, uint8_t _ack) {
 	uint8_t x = 0;
 
-	pin_set_mode(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN, PIN_MODE_INPUT);
+	i2c_ifw->input_sda(TRUE);
 	for (uint8_t i = 0; i < 7; i++) {
-		x |= (PIN_STATE(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN) ? 1 : 0);
+		x |= i2c_ifw->read_sda();
 		x = x << 1;
-		i2c_clk();
+
+		i2c_clk(i2c_ifw);
 	}
 
-	x |= (PIN_STATE(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN) ? 1 : 0);
-	i2c_clk();
+	x |= i2c_ifw->read_sda();
+	i2c_clk(i2c_ifw);
 
-	pin_set_mode(SOFT_I2C_SDA_GPIO, SOFT_I2C_SDA_PIN, PIN_MODE_OUTPUT);
-
+	i2c_ifw->input_sda(FALSE);
 	if (_ack)
-		SOFT_SDA_ON;
+		i2c_ifw->sda_cntl(ON);
 	else
-		SOFT_SDA_OFF;
+		i2c_ifw->sda_cntl(OFF);
 
-	i2c_clk();
+	i2c_clk(i2c_ifw);
 
 	return x;
 }

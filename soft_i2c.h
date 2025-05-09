@@ -11,20 +11,38 @@
 
 #include <def.h>
 
-#define SOFT_I2C_DELAY			5
+//#define SOFT_I2C_DELAY			5
 
-#define I2C_START()				soft_i2c_start()
-#define I2C_STOP()				soft_i2c_stop()
-#define I2C_WRITE(X)			soft_i2c_write(X)
-#define I2C_READ(X)				soft_i2c_read(X)
-#define I2C_RESTART()			soft_i2c_restart()
 
+typedef struct {
+	// Sets or clears SDA pin
+	void (*sda_cntl)(bool_enu on);
+
+	// Sets or clears SCL pin
+	void (*scl_cntl)(bool_enu on);
+
+	/*
+	 * Sets SDA pin type.
+	 *
+	 * @param input If true then SDA sets to be input.
+	*/
+	void (*input_sda)(bool_enu input);
+
+	/*
+	 * Reads SDA pin
+	 *
+	 * @return '1' if SDA is in high state. Otherwise returns '0'.
+	*/
+	uint8_t (*read_sda)();
+} SoftI2cCallbacks;
+
+// Sets SDA and SCL
 void soft_i2c_init();
-void soft_i2c_start();
-uint8_t soft_i2c_write(uint8_t _data);
-void soft_i2c_restart();
-void soft_i2c_stop();
-uint8_t soft_i2c_read(uint8_t _ack);
-void i2c_clk() ;
+
+void soft_i2c_start(SoftI2cCallbacks* i2c_ifw);
+uint8_t soft_i2c_write(SoftI2cCallbacks* i2c_ifw, uint8_t _data);
+void soft_i2c_restart(SoftI2cCallbacks* i2c_ifw);
+void soft_i2c_stop(SoftI2cCallbacks* i2c_ifw);
+uint8_t soft_i2c_read(SoftI2cCallbacks* i2c_ifw, uint8_t _ack);
 
 #endif /* SOFT_I2C_H_ */
